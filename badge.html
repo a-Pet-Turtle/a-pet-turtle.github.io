@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>a_Pet_Turtle — Banner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .holo-wrap {
+      perspective: 1200px;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .holo {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      transform-style: preserve-3d;
+      transition: transform 0.08s ease-out;
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(255,255,255,0.05);
+      overflow: hidden;
+    }
+
+    .holo-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #0d1f15 0%, #0a1810 50%, #0d1f1a 100%);
+    }
+
+    /* ── FIXED SHINE: use a circle so rotation never reveals a corner ── */
+    .holo-shine {
+      position: absolute;
+      /* make it a perfect square that covers the diagonal of the banner */
+      width: 200%;
+      padding-bottom: 200%; /* height = width → square → becomes circle via border-radius */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        rgba(255, 0, 128, 0.0),
+        rgba(255, 0, 128, 0.22),
+        rgba(255, 165, 0, 0.22),
+        rgba(255, 255, 0, 0.18),
+        rgba(0, 255, 128, 0.28),
+        rgba(0, 200, 255, 0.22),
+        rgba(128, 0, 255, 0.22),
+        rgba(255, 0, 128, 0.0)
+      );
+      mix-blend-mode: screen;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s ease-out;
+    }
+
+    .holo-lines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.12) 2px,
+        rgba(0,0,0,0.12) 4px
+      );
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .holo-stars {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .holo-star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: white;
+      opacity: 0;
+    }
+
+    .holo-wrap:hover .holo-star {
+      animation: twinkle 1.5s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 0.8; }
+    }
+
+    .holo-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      z-index: 3;
+      padding: 0 40px;
+    }
+
+    .holo-turtle {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      filter: drop-shadow(0 0 16px rgba(93,255,143,0.7));
+      flex-shrink: 0;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .holo-text-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .holo-name {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+      text-shadow: 0 0 20px rgba(93,255,143,0.8), 0 0 60px rgba(93,255,143,0.2);
+      white-space: nowrap;
+    }
+
+    .holo-name em {
+      color: #5dff8f;
+      font-style: normal;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: clamp(8px, 1.2vw, 14px);
+      height: 1.25em;
+      background: #5dff8f;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+      box-shadow: 0 0 8px rgba(93,255,143,0.8);
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .holo-tagline {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(0.5rem, 1.2vw, 0.75rem);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(93,255,143,0.45);
+      margin-top: 8px;
+    }
+
+    .holo-badge-label {
+      position: absolute;
+      bottom: 10px;
+      right: 16px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(93,255,143,0.25);
+      z-index: 4;
+    }
+  </style>
+</head>
+<body>
+  <div class="holo-wrap" id="holowrap">
+    <div class="holo" id="holo">
+      <div class="holo-bg"></div>
+      <div class="holo-shine" id="holoshine"></div>
+      <div class="holo-lines"></div>
+      <div class="holo-stars" id="holostars"></div>
+      <div class="holo-content">
+        <div class="holo-turtle">🐢</div>
+        <div class="holo-text-group">
+          <div class="holo-name">a<em>_Pet_</em>Turtle<span class="cursor"></span></div>
+          <div class="holo-tagline">Programmer &amp; AI Orchestrator</div>
+        </div>
+      </div>
+      <div class="holo-badge-label">a_pet_turtle.github.io</div>
+    </div>
+  </div>
+
+  <script>
+    // Spawn stars
+    const holostars = document.getElementById('holostars');
+    for (let i = 0; i < 30; i++) {
+      const s = document.createElement('div');
+      s.className = 'holo-star';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 100 + '%';
+      s.style.animationDelay = Math.random() * 2 + 's';
+      s.style.animationDuration = (1 + Math.random()) + 's';
+      holostars.appendChild(s);
+    }
+
+    const holowrap = document.getElementById('holowrap');
+    const holo = document.getElementById('holo');
+    const holoshine = document.getElementById('holoshine');
+    const maxTilt = 12;
+
+    holowrap.addEventListener('mousemove', (e) => {
+      const rect = holowrap.getBoundingClientRect();
+      const dx = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2);
+      const dy = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2);
+
+      // Tilt the card
+      holo.style.transform = `rotateX(${-dy * maxTilt}deg) rotateY(${dx * maxTilt}deg)`;
+
+      // Rotate the circular shine to follow the mouse angle
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      holoshine.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+      holoshine.style.opacity = (0.3 + dist * 0.5).toString();
+    });
+
+    holowrap.addEventListener('mouseleave', () => {
+      holo.style.transition = 'transform 0.5s ease-out';
+      holo.style.transform = 'rotateX(0deg) rotateY(0deg)';
+      holoshine.style.opacity = '0';
+      setTimeout(() => holo.style.transition = 'transform 0.08s ease-out', 500);
+    });
+  </script>
+</body>
+</html>
