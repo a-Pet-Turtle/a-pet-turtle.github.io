@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>a_Pet_Turtle</title>
+  <link rel="icon" type="image/png" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
   <style>
@@ -117,6 +118,26 @@
       border-radius: 2px;
     }
 
+    .about-teal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid rgb(57,217,164);
+      padding: 24px 28px;
+      margin-bottom: 56px;
+      border-radius: 2px;
+    }
+
+    .about-teal a {
+      color: rgb(57,217,164);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(57,217,164,0.35);
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .about-teal a:hover {
+      color: rgb(93, 241, 192);
+    }
+
     .section-label {
       font-size: 0.65rem;
       letter-spacing: 4px;
@@ -159,7 +180,7 @@
     }
 
     /* ── PROJECTS TABLE ── */
-    .projects-section {}
+    /* .projects-section {} */
 
     .projects-section h2 {
       font-family: 'Syne', sans-serif;
@@ -250,9 +271,38 @@
       color: rgba(57,217,164,1);
       text-decoration: underline;
     }
+
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: auto;
+      touch-action: none;
+    }
+
+    /* scanlines */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,0.35) 3px, rgba(0,0,0,0.35) 4px
+      );
+      animation: scanroll 12s linear infinite;
+    }
+    @keyframes scanroll {
+      from { background-position: 0 0; }
+      to   { background-position: 0 100vh; }
+    }
   </style>
 </head>
 <body>
+  <canvas id="c"></canvas>
   <div class="container">
 
     <!-- Header -->
@@ -328,10 +378,218 @@
       </table>
     </section>
 
+    <!-- About this site -->
+    <section class="about-teal">
+      <p class="section-label">// about this site</p>
+      <p>The stylesheet and 3D banner for this site was created by Claude. The 3D Tutle emoji was created by me in <a href="a-pet-turtle.github.io" target="_blank">Clay</a>, the 3D voxel modeler. The structure and content of this site was mostly me.</p>
+      <p>This site also has some cool features:<br>
+      <ol>
+        <li>A grid background with dots that respond to mouse movement and clicks.</li>
+        <li>A 3D rainbow header that responds to mouse movment with an animated cursor.</li>
+        <li>A scanline effext that gives the site a subtle hacker theme.</li>
+      </ol><br>
+      The background dots can be pushed around by the mouse, but you can do a super push by just clicking. You can also pull the dots by draging.</p>
+    </section>
+
     <footer>
       <p><a href="https://github.com/a-Pet-Turtle">github.com/a_Pet_Turtle</a> &nbsp;·&nbsp; This site was built with code &amp; AI</p>
     </footer>
-
+    <br>
   </div>
+  <script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, particles;
+let mouse = { x: -9999, y: -9999 };
+let attracting = false;
+
+const CONFIG = {
+  count: 80, maxDist: 140, mouseRadius: 120, mouseForce: 3.5,
+  fallSpeed: 0.18, particleColor: '#00ff99', lineColor: '#00e5cc',
+  minSize: 1.5, maxSize: 3,
+};
+
+const wind = {
+  x: 0, y: 0, tx: 0, ty: 0, timer: 0, interval: 600, maxStrength: 0.25,
+  update() {
+    this.timer++;
+    if (this.timer >= this.interval) {
+      this.timer = 0;
+      this.interval = 400 + Math.random() * 600;
+      this.tx = (Math.random() - 0.5) * 2 * this.maxStrength;
+      this.ty = CONFIG.fallSpeed * (0.6 + Math.random() * 0.8);
+    }
+    this.x += (this.tx - this.x) * 0.001;
+    this.y += (this.ty - this.y) * 0.001;
+  }
+};
+
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+
+class Particle {
+  constructor() { this.reset(true); }
+  reset(initial = false) {
+    this.x = Math.random() * W;
+    this.y = initial ? Math.random() * H : -10;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.vy = CONFIG.fallSpeed * (0.5 + Math.random() * 0.8);
+    this.size = CONFIG.minSize + Math.random() * (CONFIG.maxSize - CONFIG.minSize);
+    this.alpha = 0.4 + Math.random() * 0.6;
+    this.baseVx = this.vx; this.baseVy = this.vy;
+  }
+  update() {
+    const dx = this.x - mouse.x, dy = this.y - mouse.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < CONFIG.mouseRadius && dist > 0) {
+      const force = (CONFIG.mouseRadius - dist) / CONFIG.mouseRadius;
+      const angle = Math.atan2(dy, dx);
+      const dir = attracting ? -1 : 1;
+      this.vx += Math.cos(angle) * force * CONFIG.mouseForce * 0.08 * dir;
+      this.vy += Math.sin(angle) * force * CONFIG.mouseForce * 0.08 * dir;
+    }
+    this.vx += (this.baseVx + wind.x - this.vx) * 0.03;
+    this.vy += (this.baseVy + wind.y - this.vy) * 0.03;
+    const repelRadius = 28, repelStrength = 0.04;
+    for (let i = 0; i < particles.length; i++) {
+      const o = particles[i]; if (o === this) continue;
+      const dx = this.x-o.x, dy = this.y-o.y, d = Math.sqrt(dx*dx+dy*dy);
+      if (d < repelRadius && d > 0) { const f=(1-d/repelRadius)*repelStrength; this.vx+=(dx/d)*f; this.vy+=(dy/d)*f; }
+    }
+    const speed = Math.sqrt(this.vx*this.vx+this.vy*this.vy);
+    if (speed > 4) { this.vx=(this.vx/speed)*4; this.vy=(this.vy/speed)*4; }
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < -20) this.x = W+20;
+    if (this.x > W+20) this.x = -20;
+    if (this.y > H+20) this.reset();
+  }
+  draw() {
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+    ctx.fillStyle = CONFIG.particleColor; ctx.globalAlpha = this.alpha;
+    ctx.fill(); ctx.globalAlpha = 1;
+  }
+}
+
+const shockwaves = [];
+function burst(x, y) {
+  if (attracting) return;
+  particles.forEach(p => {
+    const dx=p.x-x, dy=p.y-y, dist=Math.sqrt(dx*dx+dy*dy);
+    if (dist < 160 && dist > 0) { const f=(1-dist/160)*10, a=Math.atan2(dy,dx); p.vx+=Math.cos(a)*f; p.vy+=Math.sin(a)*f; }
+  });
+  shockwaves.push({ x, y, r: 0, alpha: 0.7 });
+}
+function drawShockwaves() {
+  for (let i=shockwaves.length-1; i>=0; i--) {
+    const s=shockwaves[i]; s.r+=4; s.alpha-=0.018;
+    if (s.alpha<=0) { shockwaves.splice(i,1); continue; }
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.strokeStyle='#00ff99'; ctx.globalAlpha=s.alpha; ctx.lineWidth=1.5; ctx.stroke(); ctx.globalAlpha=1;
+  }
+}
+function drawLines() {
+  for (let i=0; i<particles.length; i++) {
+    for (let j=i+1; j<particles.length; j++) {
+      const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y, dist=Math.sqrt(dx*dx+dy*dy);
+      if (dist < CONFIG.maxDist) {
+        ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.strokeStyle=CONFIG.lineColor; ctx.globalAlpha=(1-dist/CONFIG.maxDist)*0.35; ctx.lineWidth=0.8; ctx.stroke(); ctx.globalAlpha=1;
+      }
+    }
+  }
+}
+
+/* ============================================================
+  FEATURE — MOUSE TRAIL
+  1. Add this `trail` array near your other state variables
+     (next to `mouse`, `attracting`, etc.)
+  ============================================================ */
+const trail = [];
+const TRAIL_LENGTH = 28;   // how many points long — tweak this freely
+const TRAIL_COLOR  = '#00e5cc'; // teal to contrast the green particles
+/* ============================================================
+  END — MOUSE TRAIL (variables)
+  ============================================================ */
+
+/* ============================================================
+  FEATURE — MOUSE TRAIL
+  2. Add this drawTrail() function alongside your other
+     draw functions (drawLines, drawShockwaves, etc.)
+  ============================================================ */
+function drawTrail() {
+  if (trail.length < 2) return;
+  for (let i = 1; i < trail.length; i++) {
+    const t = i / trail.length;           // 0 at tail, 1 at head
+    const alpha = t * 0.55;               // fades toward the tail
+    const width = t * 2.5;               // thins toward the tail
+    ctx.beginPath();
+    ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
+    ctx.lineTo(trail[i].x,     trail[i].y);
+    ctx.strokeStyle = TRAIL_COLOR;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth   = width;
+    ctx.lineCap     = 'round';
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+/* ============================================================
+  END — MOUSE TRAIL (draw function)
+  ============================================================ */
+
+function init() {
+  resize();
+  particles = Array.from({ length: CONFIG.count }, () => new Particle());
+}
+
+function loop() {
+  ctx.clearRect(0, 0, W, H);
+  wind.update();
+
+  /* ============================================================
+    FEATURE — MOUSE TRAIL
+    3. Push the current mouse position into the trail each frame,
+       and trim it to TRAIL_LENGTH. Add these two lines at the
+       TOP of your loop() function, right after clearRect.
+    ============================================================ */
+  if (mouse.x > 0) trail.push({ x: mouse.x, y: mouse.y });
+  if (trail.length > TRAIL_LENGTH) trail.shift();
+  /* ============================================================
+    END — MOUSE TRAIL (loop update)
+    ============================================================ */
+
+  drawShockwaves();
+  drawLines();
+
+  /* ============================================================
+    FEATURE — MOUSE TRAIL
+    4. Call drawTrail() in your loop, after drawLines()
+       and before drawing particles so it sits under them.
+    ============================================================ */
+  drawTrail();
+  /* ============================================================
+    END — MOUSE TRAIL (loop call)
+    ============================================================ */
+
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(loop);
+}
+
+/* ---- event listeners ---- */
+window.addEventListener('resize', resize);
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; trail.length = 0; });
+window.addEventListener('click', e => { burst(e.clientX, e.clientY); });
+window.addEventListener('mousedown', e => { attracting = true; mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mouseup', () => { attracting = false; });
+window.addEventListener('touchmove', e => {
+  e.preventDefault();
+  mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY;
+}, { passive: false });
+window.addEventListener('touchstart', e => { attracting = true; mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }, { passive: true });
+window.addEventListener('touchend', () => { mouse.x = -9999; mouse.y = -9999; attracting = false; trail.length = 0; });
+
+init();
+loop();
+</script>
 </body>
 </html>
