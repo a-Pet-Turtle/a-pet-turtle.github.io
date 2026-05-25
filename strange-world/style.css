@@ -1,0 +1,17 @@
+body {
+  background: white;
+  font-family: 'Comic Neue', cursive, sans-serif;
+  background-image: url("backdrop.png");
+}
+th, td {
+  border: 2px solid black;
+  text-align: center;
+  background: white;
+  padding: 3px;
+}
+img {
+  background: white;
+  border: 3px solid grey;
+  display: flex;
+  max-width: 500px
+}
